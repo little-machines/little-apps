@@ -14,3 +14,8 @@ shell:
 
 delete:
 	-kubectl delete -f shell.yaml
+
+status:
+	kubectl get pods \
+		-l app=$(deployent_name) \
+		-owide
