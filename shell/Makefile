@@ -1,10 +1,16 @@
+deployent_name = vtse-shell
+shell = /bin/bash
 
 create:
-	kubectl run -i --tty shell --image=ubuntu:20.04
+	kubectl create -f shell.yaml
 
 shell:
-	kubectl exec -it shell -- /bin/bash
-
+	$(eval pod = $(shell kubectl get pods \
+		-l app=$(deployent_name) \
+		-ojsonpath='{.items[0].metadata.name}' \
+	))
+	kubectl exec -it $(pod) -- /usr/bin/sudo -u vtse -i
+	#kubectl exec -it $(pod) -- $(shell)
 
 delete:
-	-kubectl delete pod shell
+	-kubectl delete -f shell.yaml

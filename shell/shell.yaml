@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vtse-shell-setup
+data:
+  setup.sh: |
+    #!/bin/bash
+    LOG=/var/log/shell-setup.log
+    exec 1<> ${LOG}
+    exec 2>&1
+    set -euxo pipefail
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update
+    apt-get install -y -qq less
+    apt-get dist-upgrade -y -qq --autoremove
+    apt-get install -y -qq \
+      bash \
+      git \
+      ssh-import-id \
+      sudo \
+      vim
+    groupadd users || true
+    groupadd sudo || true
+    useradd -g users -G sudo -m vtse -s /bin/bash
+    echo "%sudo ALL=(ALL) NOPASSWD: ALL" | tee /etc/sudoers.d/sudo
+    # just to make this not exit
+    tail -f /var/log/bootstrap.log
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vtse-shell
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vtse-shell
+  template:
+    metadata:
+      labels:
+        app: vtse-shell
+    spec:
+      containers:
+        - name: shell
+          image: ubuntu:20.04
+          imagePullPolicy: "IfNotPresent"
+          volumeMounts:
+            - name: shell-setup
+              mountPath: /opt/setup
+          command:
+            - "/bin/bash"
+            - "/opt/setup/setup.sh"
+      volumes:
+        - name: shell-setup
+          configMap:
+            name: vtse-shell-setup
