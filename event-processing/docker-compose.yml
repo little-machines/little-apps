@@ -1,0 +1,96 @@
+version: "3.7"
+services:
+
+  mq:
+    # arm32v6
+    image: rabbitmq:3-alpine
+    networks:
+    - mynet
+    ports:
+    - 5672
+    deploy:
+      restart_policy:
+        condition: any
+    labels:
+      kompose.service.type: ClusterIP
+      kompose.service.port: 5672
+
+  producer:
+    depends_on:
+    - mq
+    image: ghcr.io/vincetse/event-stream:event-processor
+    deploy:
+      restart_policy:
+        condition: any
+    networks:
+    - mynet
+    command:
+    - /event-producer
+    - --uri
+    - amqp://guest:guest@mq:5672
+    - --routing-key
+    - hello-for-processor-a
+    - --event-count
+    - "999999999"
+
+  processor_a:
+    depends_on:
+    - mq
+    image: ghcr.io/vincetse/event-stream:event-processor
+    deploy:
+      restart_policy:
+        condition: any
+    networks:
+    - mynet
+    command:
+    - /event-processor
+    - --consumer-uri
+    - amqp://guest:guest@mq:5672
+    - --consumer-queue-name
+    - hello-for-processor-a
+    - --producer-uri
+    - amqp://guest:guest@mq:5672
+    - --producer-routing-key
+    - hello-for-processor-b
+
+  processor_b:
+    depends_on:
+    - mq
+    image: ghcr.io/vincetse/event-stream:event-processor
+    deploy:
+      restart_policy:
+        condition: any
+    networks:
+    - mynet
+    command:
+    - /event-processor
+    - --consumer-uri
+    - amqp://guest:guest@mq:5672
+    - --consumer-queue-name
+    - hello-for-processor-b
+    - --producer-uri
+    - amqp://guest:guest@mq:5672
+    - --producer-routing-key
+    - hello-for-consumer
+
+  consumer:
+    depends_on:
+    - mq
+    image: ghcr.io/vincetse/event-stream:event-processor
+    deploy:
+      restart_policy:
+        condition: any
+    networks:
+    - mynet
+    command:
+    - /event-consumer
+    - --uri
+    - amqp://guest:guest@mq:5672
+    - --queue-name
+    - hello-for-consumer
+
+networks:
+  mynet:
+    external: false
+    driver: overlay
+    attachable: true

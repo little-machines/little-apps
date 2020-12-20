@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - db-deployment.yaml
+  - db-service.yaml
+  - dbdata-persistentvolumeclaim.yaml
+  - default-networkpolicy.yaml
+  - migrate-pod.yaml
+  - todos-api-buffalo-dbnet-networkpolicy.yaml
+  - todos-api-buffalo-internal-networkpolicy.yaml
+  - web-deployment.yaml
+  - web-service.yaml
+
+commonLabels:
+  app.kubernetes.io/name: buffalo-todos-api
+
+namePrefix: buffalo-todos-api-
+
+vars:
+  - name: PGHOST
+    objref:
+      kind: Service
+      name: db
+      apiVersion: v1

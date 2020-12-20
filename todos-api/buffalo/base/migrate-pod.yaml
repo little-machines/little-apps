@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --file=docker-compose.yml --out=./base
+    kompose.version: 1.22.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.network/default: "true"
+    io.kompose.network/todos-api-buffalo-dbnet: "true"
+    io.kompose.service: migrate
+  name: migrate
+spec:
+  containers:
+    - args:
+        - migrate
+      command:
+        - /bin/app
+      env:
+        - name: DATABASE_URL
+          value: postgres://postgres:p0stgres@$(PGHOST)/app?sslmode=require
+        - name: GO_ENV
+          value: production
+      image: ghcr.io/todos-api/buffalo:docker-image
+      name: migrate
+      resources: {}
+  restartPolicy: OnFailure
+status: {}

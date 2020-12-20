@@ -1,0 +1,76 @@
+# https://github.com/docker/compose/issues/374#issuecomment-284695410
+version: "3.7"
+services:
+  web:
+    image: "ghcr.io/todos-api/buffalo:docker-image"
+    networks:
+    - "default"
+    - "dbnet"
+    - "internal"
+    environment:
+      PORT: "3000"
+      GO_ENV: "production"
+      DATABASE_URL: "postgres://postgres:p0stgres@db/app?sslmode=require"
+    ports:
+    - "3000"
+    entrypoint:
+    - "/bin/app"
+    depends_on:
+    - "db"
+    #healthcheck:
+    #  test: ["CMD", "curl", "-f", "http://localhost:3000/health_check"]
+    #  interval: "2m"
+    #  timeout: "300s"
+    #  retries: 3
+    #  start_period: "240s"
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: "10s"
+        order: "start-first"
+      resources:
+        limits:
+          cpus: "1"
+          memory: "256m"
+        reservations:
+          cpus: "1"
+          memory: "256m"
+      restart_policy:
+        condition: "any"
+        delay: "20s"
+        max_attempts: 10
+        window: "120s"
+    labels:
+      kompose.service.type: LoadBalancer
+      kompose.service.port: 3000
+
+  migrate:
+    image: "ghcr.io/todos-api/buffalo:docker-image"
+    networks:
+    - "default"
+    - "dbnet"
+    environment:
+      GO_ENV: "production"
+      DATABASE_URL: "postgres://postgres:p0stgres@db/app?sslmode=require"
+    entrypoint:
+    - "/bin/app"
+    command:
+    - "migrate"
+    depends_on:
+    - "db"
+    deploy:
+      restart_policy:
+        condition: "on-failure"
+        delay: "10s"
+        max_attempts: 15
+        window: "120s"
+
+networks:
+  dbnet:
+    name: "todos-api-buffalo-dbnet"
+    external: true
+  internal:
+    name: "todos-api-buffalo-internal"
+    driver: "overlay"
+    attachable: true

@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "todos-api.fullname" . }}-migrations
+  labels:
+    {{- include "todos-api.labels" . | nindent 4 }}
+spec:
+  template:
+    metadata:
+      name: {{ include "todos-api.fullname" . }}-migrations
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - "bundle"
+            - "exec"
+            - "rails"
+            - "db:migrate"
+          env:
+            - name: "PORT"
+              value: "3000"
+            - name: "DATABASE_URL"
+              value: "postgres://{{ .Values.postgres.postgres.user }}:{{ .Values.postgres.postgres.password }}@{{ .Release.Name }}-postgres/{{ .Values.postgres.postgres.db }}"
+            {{- toYaml .Values.env | nindent 12 }}

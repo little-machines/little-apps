@@ -1,0 +1,14 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  name: todos-api-buffalo-internal
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              io.kompose.network/todos-api-buffalo-internal: "true"
+  podSelector:
+    matchLabels:
+      io.kompose.network/todos-api-buffalo-internal: "true"

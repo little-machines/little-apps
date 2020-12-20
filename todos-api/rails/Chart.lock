@@ -1,0 +1,6 @@
+dependencies:
+- name: postgres
+  repository: https://infrastructure-as-code.github.io/helm-charts
+  version: 0.1.0
+digest: sha256:69ea1a9c3704952bd2355d33fa7d1e2692af3728fc46c37c09d81776b06eec2e
+generated: "2020-10-30T21:06:40.888057-04:00"

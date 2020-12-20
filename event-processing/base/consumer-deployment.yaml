@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert --out=./manifests
+    kompose.version: 1.22.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: consumer
+  name: consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: consumer
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert --out=./manifests
+        kompose.version: 1.22.0 (HEAD)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/mynet: "true"
+        io.kompose.service: consumer
+    spec:
+      containers:
+        - args:
+            - /event-consumer
+            - --uri
+            - amqp://guest:guest@mq:5672
+            - --queue-name
+            - hello-for-consumer
+          image: ghcr.io/vincetse/event-stream:event-processor
+          name: consumer
+          resources: {}
+      restartPolicy: Always
+status: {}
